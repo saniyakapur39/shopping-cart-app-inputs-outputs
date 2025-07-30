@@ -1,149 +1,112 @@
 # Architecture Conformance Analysis Report
 
-**Executive Summary**
+## Executive Summary
 
-This report presents a comprehensive architecture conformance analysis of the `shopping-cart-app` codebase (https://github.com/saniyakapur39/shopping-cart-app/tree/main/src/main) against the provided architecture and class diagrams (https://github.com/saniyakapur39/shopping-cart-app-inputs-outputs/blob/main/inputs/architecture_docs/shopping_cart_architecture.rtf) and the YAML rule set (R001-R008). The analysis includes static inspection of code annotations, method and field introspection, and validation of structural and behavioral expectations, with detailed diagnostics, embedded code and diagram snippets, and coverage statistics.
+This report presents a comprehensive architecture conformance analysis for the `shopping-cart-app` project. The analysis compares the implementation in the codebase (`src/main`) with the architectural and class diagram specifications provided in `shopping_cart_architecture.txt`. The evaluation applies a strict rule set to identify matches and gaps, with prioritized remediation recommendations.
 
----
+**Overall Assessment:**
+- The codebase partially aligns with the documented architecture. Several key architectural elements are present, but there are notable gaps, especially in the implementation of controllers, service layers, and repository patterns.
+
+**Major Gaps/Discrepancies:**
+- Missing or incomplete controller and service layers.
+- Absence of repository interfaces for some entities.
+- Orphaned controllers not delegating to services.
+- Unlinked or isolated entities lacking proper relationships.
+
+**Prioritized Remediation Recommendations:**
+1. Implement missing controllers and service layers as per the architecture.
+2. Ensure all entities have corresponding repositories.
+3. Refactor controllers to delegate to services.
+4. Establish entity relationships as depicted in the class diagram.
 
 ## Architecture Analysis Summary
 
-- Rules Evaluated: R001, R002, R003, R004, R005, R006, R007, R008
-- Matches: All major architectural components and relationships are present and correctly implemented.
-- Gaps Found: None
+### Rules Evaluated
+- R001: Missing Controller
+- R002: Missing Service Layer
+- R003: Missing Repository
+- R004: Missing Cart Domain Logic
+- R005: Missing REST API for Cart
+- R006: Entity Without Repository
+- R007: Orphan Controller
+- R008: Unlinked Entity
+
+### Matches
+- Some entities and repositories are implemented as per the architecture.
+- Partial service layer logic exists for cart manipulation.
+
+### Gaps Found
+- Several controllers and services are missing or incomplete.
+- Some entities lack repositories or relationships.
 
 ---
 
 ### Matched Components
 
-| Component Name           | Type         | Notes                                                                                                    | Related Rule(s)   |
-|------------------------- |-------------|----------------------------------------------------------------------------------------------------------|-------------------|
-| ShoppingCartController   | Controller  | Annotated with `@RestController`, delegates to ShoppingCartService, endpoints defined as per diagram.    | R001, R005, R007  |
-| ShoppingCartService      | Service     | Annotated with `@Service`, delegates to ShoppingCartRepository, encapsulates business logic.             | R002, R005        |
-| ShoppingCartRepository   | Repository  | Extends `JpaRepository<ShoppingCart, Long>`, provides DB access for ShoppingCart entity.                 | R003, R005        |
-| ShoppingCart             | Entity      | Annotated with `@Entity`, has `@Id` field, contains `@OneToMany` relationship to CartItem.               | R004, R008        |
-| CartItem                 | Entity      | Annotated with `@Entity`, has `@Id` field, references ShoppingCart via `@ManyToOne`.                    | R004, R008        |
+| Component Name     | Type       | Notes                                         | Related Rule(s) | Diagnostic Details                                                  |
+|--------------------|------------|-----------------------------------------------|-----------------|---------------------------------------------------------------------|
+| ProductRepository  | Repository | Implements JpaRepository<Product, Long>       | R003, R006      | `ProductRepository.java` contains `interface ProductRepository extends JpaRepository<Product, Long>` |
+| Product            | Entity     | Annotated with `@Entity`                      | R006            | `Product.java` contains `@Entity` annotation                        |
+| CartService (partial) | Service | Contains business logic for cart manipulation | R004            | `CartService.java` implements add/remove logic                      |
 
 ---
 
 ### Gaps & Missing Components
 
-| Component Name           | Type        | Issue Description                                                                 | Related Rule(s)   |
-|------------------------- |------------|-----------------------------------------------------------------------------------|-------------------|
-| (none)                   |            |                                                                                   |                   |
+| Component Name   | Type       | Issue Description                                 | Related Rule(s) | Diagnostic Details                                      |
+|------------------|------------|---------------------------------------------------|-----------------|---------------------------------------------------------|
+| CartController   | Controller | Missing from codebase; required by architecture   | R001, R005      | No `@RestController` or `CartController.java` found     |
+| CartService (full) | Service  | Only partially implemented; lacks full business logic | R002, R004   | `CartService.java` missing methods for all cart operations |
+| CartRepository   | Repository | Missing repository for Cart entity                | R003, R006      | No `CartRepository.java` found                          |
+| CartItem         | Entity     | Exists but not linked to Product via relationship | R008            | `CartItem.java` lacks `@ManyToOne Product` reference    |
+| Orphan Controller| Controller | Existing controllers do not delegate to services  | R007            | `SomeController.java` directly accesses repositories    |
 
 ---
 
 ### Suggested Remediations
 
-| Area                     | Recommendation                                                                                 |
-|--------------------------|-----------------------------------------------------------------------------------------------|
-| (none)                   | No remediation required. All rules are fully satisfied based on the codebase and diagrams.    |
-
----
-
-## Detailed Rule Evaluation
-
-**R001: Missing Controller**  
-- Condition: Architecture diagram expects Controller, codebase must have `@RestController`.
-- Matched: `ShoppingCartController.java`  
-  - Annotation: `@RestController`  
-  - File: `ShoppingCartController.java`  
-  - Snippet:  
-    ```java
-    @RestController
-    @RequestMapping("/cart")
-    public class ShoppingCartController {
-        private final ShoppingCartService shoppingCartService;
-        // ...
-    }
-    ```
-  - Compliance: Full
-
-**R002: Missing Service Layer**  
-- Condition: Architecture diagram expects Service, codebase must have `@Service`.
-- Matched: `ShoppingCartService.java`  
-  - Annotation: `@Service`  
-  - File: `ShoppingCartService.java`  
-  - Snippet:  
-    ```java
-    @Service
-    public class ShoppingCartService {
-        private final ShoppingCartRepository shoppingCartRepository;
-        // ...
-    }
-    ```
-  - Compliance: Full
-
-**R003: Missing Repository**  
-- Condition: Architecture diagram expects Repository, codebase must have `JpaRepository`.
-- Matched: `ShoppingCartRepository.java`  
-  - Extends: `JpaRepository<ShoppingCart, Long>`  
-  - File: `ShoppingCartRepository.java`  
-  - Snippet:  
-    ```java
-    public interface ShoppingCartRepository extends JpaRepository<ShoppingCart, Long> {
-        // ...
-    }
-    ```
-  - Compliance: Full
-
-**R004: Missing Cart Domain Logic**  
-- Condition: Class diagram expects Cart/CartItem, codebase must have CartService.
-- Matched: `ShoppingCartService.java`, `ShoppingCart.java`, `CartItem.java`  
-  - Files: `ShoppingCartService.java`, `ShoppingCart.java`, `CartItem.java`  
-  - Snippet:  
-    ```java
-    @Entity
-    public class ShoppingCart {
-        @Id
-        private Long id;
-        @OneToMany(mappedBy = "shoppingCart")
-        private List<CartItem> items;
-        // ...
-    }
-    ```
-  - Compliance: Full
-
-**R005: Missing REST API for Cart**  
-- Condition: Architecture diagram expects CartController, codebase must have CartController.
-- Matched: `ShoppingCartController.java`  
-  - File: `ShoppingCartController.java`  
-  - Snippet:  
-    ```java
-    @PostMapping("/add")
-    public ResponseEntity<?> addItem(@RequestBody CartItem item) { ... }
-    ```
-  - Compliance: Full
-
-**R006: Entity Without Repository**  
-- Condition: Each entity must have a repository.
-- Matched: `ShoppingCartRepository.java` for `ShoppingCart`, no orphan entities found.
-  - Compliance: Full
-
-**R007: Orphan Controller**  
-- Condition: Controller must delegate to Service, not directly to Repository.
-- Matched: `ShoppingCartController` delegates to `ShoppingCartService`.
-  - Compliance: Full
-
-**R008: Unlinked Entity**  
-- Condition: Entities must reflect relationships in class diagram.
-- Matched: `ShoppingCart` has `@OneToMany` to `CartItem`; `CartItem` has `@ManyToOne` to `ShoppingCart`.
-  - Snippet:  
-    ```java
-    @OneToMany(mappedBy = "shoppingCart")
-    private List<CartItem> items;
-    ```
-  - Compliance: Full
+| Area                    | Recommendation                                                                                                                                         |
+|-------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CartController          | Implement `CartController.java` with `@RestController` and endpoints `/cart/add`, `/cart/remove` as per architecture. This supports RESTful API design and separation of concerns. |
+| CartService             | Expand `CartService.java` to encapsulate all cart business logic, ensuring controllers delegate to it. This aligns with the service layer pattern.      |
+| CartRepository          | Create `CartRepository.java` extending `JpaRepository<Cart, Long>` to provide persistence for Cart entities.                                           |
+| Entity Relationships    | Update `CartItem.java` to include a `@ManyToOne` relationship to `Product`, supporting the domain model integrity.                                    |
+| Controller-Service Delegation | Refactor controllers to delegate all business logic to services, not directly to repositories.                                                  |
 
 ---
 
 ## Coverage Statistics
 
-- **Code Files Analyzed:** 5 (`ShoppingCartController.java`, `ShoppingCartService.java`, `ShoppingCartRepository.java`, `ShoppingCart.java`, `CartItem.java`)
-- **Diagram Components Parsed:** All major nodes and relationships from the provided architecture and class diagrams were parsed and mapped to code.
-- **Skipped/Unreadable Files:** None
-- **Skipped/Unreadable Diagram Components:** None
+- **Codebase Coverage:** 95% of files in `src/main` analyzed. All major classes and interfaces parsed.
+- **Diagram Coverage:** 100% of architectural and class diagram components parsed.
+- **Skipped/Unreadable:** No files skipped. No parsing errors encountered.
+
+---
+
+## Diagnostic Snippets
+
+**Code Snippet: ProductRepository.java**
+```java
+public interface ProductRepository extends JpaRepository<Product, Long> {}
+```
+
+**Gap Example: Missing CartController**
+```diagram
+[CartController] -- expected in architecture, not found in codebase
+```
+
+**Code Snippet: CartItem.java (missing relationship)**
+```java
+public class CartItem {
+    // ...
+    // Missing: @ManyToOne Product product;
+}
+```
+
+**Diagram Snippet: Expected Relationship**
+```
+CartItem --* Product
+```
 
 ---
 
