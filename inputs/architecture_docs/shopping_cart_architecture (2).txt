@@ -1,0 +1,55 @@
++---------------------+          +---------------------+
+|  REST Controller    | <------> |  Service Layer      |
++---------------------+          +---------------------+
+             |                            |
+             v                            v
+     +---------------+           +-------------------+
+     | ProductController |       | ProductService     |
+     +---------------+           +-------------------+
+                                             |
+                                             v
+                              +--------------------------+
+                              | Repository Layer (JPA)   |
+                              | ProductRepository        |
+                              +--------------------------+
+                                             |
+                                             v
+                                  +--------------------+
+                                  | H2 In-Memory DB     |
+                                  +--------------------+
+
+
+
+
+
+classDiagram
+    class Product {
+        - Long id
+        - String name
+        - double price
+    }
+
+    class CartItem {
+        - Product product
+        - int quantity
+    }
+
+    class ProductRepository {
+        <<interface>>
+    }
+
+    class ProductService {
+        - ProductRepository productRepository
+        + List<Product> getAllProducts()
+        + Product getProductById(Long id)
+    }
+
+    class ProductController {
+        - ProductService productService
+        + List<Product> getAllProducts()
+        + Product getProductById(Long id)
+    }
+
+    ProductService --> ProductRepository
+    ProductController --> ProductService
+    CartItem --> Product
