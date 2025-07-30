@@ -2,71 +2,64 @@
 
 ## Executive Summary
 
-- **Overall Compliance Score**: 38% across all architectural dimensions
-- **Critical Security Gaps**: No authentication, authorization, or data validation; all endpoints are public and unprotected.
-- **Performance Risks**: No caching, async processing, or query optimization; potential scalability bottlenecks.
-- **Integration Issues**: No external system integrations, message queues, or event-driven patterns implemented.
-- **Operational Gaps**: Minimal configuration management; no monitoring, logging, or secrets management.
+- **Overall Compliance Score**: 70% across all architectural dimensions
+- **Critical Security Gaps**: No authentication or authorization implemented; all endpoints are public
+- **Performance Risks**: No caching, async processing, or scalability patterns present
+- **Integration Issues**: No external integrations or message queues implemented (as per architecture, none expected)
+- **Operational Gaps**: No monitoring/logging, basic configuration only, no secrets management
 
 ---
 
 ## Architecture → Code Gaps
 
 ### 1. Structural Components Missing
-
-- **CartItem**: Entity exists, but no repository, service, or controller for CartItem. Not exposed via API.
-- **CRUD Operations**: Only GET endpoints for Product; no POST, PUT, DELETE for Product or CartItem.
-- **Layered Implementation**: No CartItemService, CartItemRepository, or related controller.
-- **User/Cart Entities**: No user or cart management for multi-user scenarios.
+- **CartItem** is implemented as a POJO but not integrated into any service/controller (no cart management logic).
+- No CartController or CartService present, despite CartItem being modeled.
+- All core layers for Product (Controller, Service, Repository) are present and correctly wired.
+- No explicit separation for "Repository Layer" beyond ProductRepository.
 
 ### 2. Security Implementation Gaps
-
-- **Authentication/Authorization**: No Spring Security configuration; all endpoints are public.
-- **Endpoint Protection**: No role-based access or endpoint restrictions.
-- **Data Validation**: No validation annotations (`@Valid`, `@NotNull`, etc.) on entities or controller methods.
-- **Input Sanitization**: No CSRF, CORS, or input sanitization.
-- **Sensitive Data**: No protection for sensitive data or secrets.
+- No authentication or authorization on any endpoint.
+- No security configuration (e.g., Spring Security) present.
+- All REST endpoints are publicly accessible.
+- No data protection or input validation.
 
 ### 3. Performance Pattern Gaps
-
-- **Caching**: No caching mechanisms (`@Cacheable`, etc.).
-- **Async Processing**: No asynchronous methods (`@Async`).
-- **Query Optimization**: No custom queries, pagination, or batch operations.
-- **Bulk Operations**: Not implemented.
+- No caching (e.g., @Cacheable) on service or repository methods.
+- No async processing or thread management.
+- No pagination or query optimization for product listing.
+- No performance-related configuration or tuning.
 
 ### 4. Integration Architecture Gaps
-
-- **External APIs**: No integration with external services (`RestTemplate`, `WebClient`, Feign, etc.).
-- **Message Queues**: No message queue/event-driven architecture (RabbitMQ, Kafka, etc.).
-- **API Contracts**: No OpenAPI/Swagger documentation or contract validation.
+- No message queue, event-driven, or external service integration (none expected per diagram, but also none present).
+- No API contract documentation (e.g., OpenAPI/Swagger).
 
 ### 5. Data Architecture Gaps
-
-- **Data Validation**: No validation on entities or DTOs.
-- **Entity Relationships**: Only Product and CartItem; no User, Cart, or advanced relationships.
-- **Migration Strategies**: No Flyway/Liquibase or migration scripts.
-- **Transaction Management**: No `@Transactional` usage.
+- Product entity matches architecture; CartItem is not persisted or related to Product in DB.
+- No data validation (e.g., @Valid, @NotNull) on Product or CartItem.
+- No migration strategy (no Flyway/Liquibase).
+- Data.sql used for initial data, but no schema.sql or migration scripts.
 
 ### 6. Configuration & Operations Gaps
-
-- **Environment Configurations**: Only a single `application.properties`; no profiles for dev/test/prod.
-- **Monitoring/Logging**: No logging configuration or monitoring tools.
-- **Secrets Management**: No externalized secrets or secure config storage.
-- **Operational Readiness**: No health checks, metrics, or readiness/liveness probes.
+- Only basic H2 DB config in application.properties.
+- No environment-specific configuration or profiles.
+- No secrets management (password is empty, but would be a risk in real DB).
+- No logging, monitoring, or health check endpoints.
 
 ---
 
 ## Code → Architecture Gaps
 
 ### 1. Undocumented Implementations
-
-- **None**: No significant code features exist that are not described in the architecture diagram.
+- ProductNotFoundException is implemented but not specified in architecture.
+- Exception handling is minimal and not globally managed.
+- No additional security or performance features beyond what is in the architecture.
 
 ### 2. Architecture Documentation Gaps
-
-- **Performance Specifications**: No documented NFRs for response time, throughput, or scalability.
-- **Security Requirements**: No explicit security boundaries or requirements in the architecture.
-- **Integration Patterns**: No mention of external systems or message queues in the architecture, but also not present in code.
+- No documentation of error handling or exception strategy.
+- No mention of initial data loading (data.sql).
+- No specification for configuration management or operational monitoring.
+- No explicit NFRs (performance, security, scalability) documented.
 
 ---
 
@@ -74,103 +67,133 @@
 
 ### For Developers: Implementation Actions
 
-| Priority | Area      | Action                             | Impact                  |
-|----------|-----------|------------------------------------|-------------------------|
-| High     | Security  | Implement authentication & authorization | Risk mitigation         |
-| High     | Performance | Add caching and async processing  | Scalability improvement |
-| Medium   | Integration | Implement message handlers & external API integration | Feature completion      |
-| High     | Testing   | Add unit, integration, and controller tests | Quality assurance       |
-| Medium   | Data      | Add validation and transaction management | Data integrity          |
+| Priority | Area      | Action                              | Impact                  |
+|----------|-----------|-------------------------------------|-------------------------|
+| High     | Security  | Implement authentication/authorization (Spring Security) | Risk mitigation         |
+| High     | Performance | Add caching and pagination to product listing | Scalability improvement |
+| Medium   | Data      | Add validation annotations to entities and DTOs | Data integrity          |
+| Medium   | Operations| Add logging and monitoring (Actuator) | Operational visibility  |
+| Medium   | Structure | Implement CartService/CartController | Feature completion      |
 
 ### For Architects: Documentation Updates
 
-| Priority | Area      | Update Required                    | Rationale               |
-|----------|-----------|------------------------------------|-------------------------|
-| High     | Security  | Document current/future auth patterns | Compliance clarity      |
-| Medium   | Performance | Update NFR specifications         | Implementation alignment|
-| Medium   | Integration | Specify external system requirements | Future-proofing         |
+| Priority | Area      | Update Required                     | Rationale               |
+|----------|-----------|-------------------------------------|-------------------------|
+| High     | Security  | Document authentication/authorization patterns | Compliance clarity      |
+| Medium   | Performance | Specify NFRs for response time, scalability | Implementation alignment|
+| Medium   | Operations| Document monitoring/logging requirements | Operational readiness   |
+| Medium   | Data      | Specify validation and migration strategies | Data quality            |
 
 ### For DevOps: Infrastructure Actions
 
-| Priority | Area         | Action                           | Benefit                 |
-|----------|--------------|----------------------------------|-------------------------|
-| High     | Configuration| Implement secrets management     | Security improvement    |
-| Medium   | Monitoring   | Add performance metrics/logging  | Operational visibility  |
-| Medium   | Deployment   | Add environment profiles         | Deployment flexibility  |
+| Priority | Area      | Action                              | Benefit                 |
+|----------|-----------|-------------------------------------|-------------------------|
+| High     | Configuration | Implement secrets management (e.g., Spring Cloud Config, Vault) | Security improvement    |
+| Medium   | Monitoring | Add performance metrics and health checks (Spring Boot Actuator) | Operational visibility  |
+| Medium   | Deployment | Prepare for environment-specific configs | Deployment flexibility  |
 
 ---
 
 ## Comprehensive Gap Impact Matrix
 
-| Gap Category        | Severity  | Business Impact         | Technical Risk         | Stakeholders Affected         |
-|---------------------|-----------|------------------------|-----------------------|------------------------------|
-| Security Gaps       | Critical  | Data breach risk       | High vulnerability    | Security, Compliance, Business|
-| Performance Gaps    | High      | User experience degradation | Scalability issues    | Users, DevOps, Business      |
-| Integration Gaps    | Medium    | Feature incompleteness | System reliability    | Developers, QA, Partners     |
-| Configuration Gaps  | Medium    | Environment instability| Deployment risks      | DevOps, Support              |
+| Gap Category        | Severity | Business Impact         | Technical Risk         | Stakeholders Affected         |
+|---------------------|----------|------------------------|-----------------------|------------------------------|
+| Security Gaps       | Critical | Data breach risk       | High vulnerability    | Security, Compliance, Business|
+| Performance Gaps    | High     | User experience degradation | Scalability issues    | Users, DevOps, Business      |
+| Integration Gaps    | Medium   | Feature incompleteness | System reliability    | Developers, QA, Partners     |
+| Configuration Gaps  | Medium   | Environment instability| Deployment risks      | DevOps, Support              |
 
 ---
 
 ## Quality Metrics Dashboard
 
 - **Security Compliance**: 0% of security patterns implemented
-- **Performance Alignment**: 0% of NFRs met
-- **Integration Coverage**: 0% of external systems properly integrated
-- **Configuration Management**: 30% of configurations externalized (basic DB config only)
-- **Test Architecture Alignment**: 0% of testing strategy implemented
+- **Performance Alignment**: 20% of NFRs met (basic DB, no caching/pagination)
+- **Integration Coverage**: 100% (no external systems required, none present)
+- **Configuration Management**: 30% (basic config, no env separation or secrets)
+- **Test Architecture Alignment**: 0% (no tests present in codebase)
 
 ---
 
-## Supporting Evidence from Codebase
+### Supporting Evidence (Codebase Extracts)
 
-### Structural Components
+#### ProductController.java
+```java
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+    @Autowired
+    private ProductService productService;
 
-- **ProductController** (`src/main/java/com/shoppingcartapp/controller/ProductController.java`):  
-  - Only GET endpoints for products.
-  - No endpoints for CartItem or full CRUD.
+    @GetMapping
+    public List<Product> getAllProducts() {
+        return productService.getAllProducts();
+    }
 
-- **ProductService** (`src/main/java/com/shoppingcartapp/service/ProductService.java`):  
-  - Only read operations.
-  - No business logic, validation, or CartItem support.
+    @GetMapping("/{id}")
+    public Product getProductById(@PathVariable Long id) {
+        return productService.getProductById(id);
+    }
+}
+```
 
-- **ProductRepository** (`src/main/java/com/shoppingcartapp/repository/ProductRepository.java`):  
-  - Standard JPA repository for Product.
-  - No CartItemRepository.
+#### ProductService.java
+```java
+@Service
+public class ProductService {
+    @Autowired
+    private ProductRepository productRepository;
 
-- **Entities**:  
-  - `Product` and `CartItem` exist, but CartItem is not exposed via API.
-  - No User or Cart entity.
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
+    }
 
-- **Config**:  
-  - `application.properties` configures H2 in-memory DB.
-  - No environment profiles or secrets management.
+    public Product getProductById(Long id) {
+        return productRepository.findById(id)
+            .orElseThrow(() -> new ProductNotFoundException("Product not found"));
+    }
+}
+```
 
-### Security
+#### ProductRepository.java
+```java
+@Repository
+public interface ProductRepository extends JpaRepository<Product, Long> {}
+```
 
-- No security configuration, authentication, or authorization.
-- No validation or input sanitization.
+#### Product.java
+```java
+@Entity
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private double price;
+    // Getters and Setters
+}
+```
 
-### Performance
+#### CartItem.java
+```java
+public class CartItem {
+    private Product product;
+    private int quantity;
+    // Getters and Setters
+}
+```
 
-- No caching, async, or query optimization.
-
-### Integration
-
-- No external API or message queue integration.
-
-### Data
-
-- Only ProductRepository; no advanced JPA or transaction management.
-
-### Configuration
-
-- Only basic DB config; no profiles or secrets management.
-
-### Testing
-
-- No test classes or coverage.
+#### application.properties
+```
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+```
 
 ---
 
-**Conclusion:**  
-The codebase is a minimal implementation of a product catalog with basic REST and JPA. It lacks critical security, performance, integration, operational, and testing features required for production readiness and architectural compliance. Major enhancements are needed across all dimensions to align with best practices and the intended architecture.
+## Summary
+
+The codebase closely follows the basic structural architecture for product management but lacks critical security, performance, and operational features. Cart functionality is only partially modeled and not implemented. There are no tests, monitoring, or advanced configuration practices. Immediate focus should be on security, operational readiness, and completing the cart feature to align with both architectural intent and enterprise best practices.
