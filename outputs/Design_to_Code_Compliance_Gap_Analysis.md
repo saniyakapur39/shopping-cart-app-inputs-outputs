@@ -2,28 +2,14 @@
 
 ## Architecture Analysis Summary
 
-**Matches:**  
-- ProductController, ProductService, ProductRepository, Product entity  
-- Controller → Service → Repository chain for product management  
-- Proper use of Spring annotations (@RestController, @Service, @Repository, @Entity) for product domain  
-- ProductController exposes REST endpoints as per architecture  
-- ProductService encapsulates business logic and delegates to ProductRepository  
-- ProductRepository extends JpaRepository<Product, Long>  
-- Product entity fields and persistence as per class diagram  
-
-**Gaps Found:**  
-- No CartController or CartService present  
-- CartItem exists as a POJO but is not annotated as @Entity and lacks a repository  
-- No REST endpoints for cart operations (add, remove, view)  
-- No JPA relationship between CartItem and Product  
-- No persistence or repository for CartItem  
-- No service or controller logic for cart management  
+**Matches:** ProductController, ProductService, ProductRepository, Product entity, Controller→Service→Repository chain  
+**Gaps Found:** No CartService, no CartController, CartItem is not an @Entity and has no repository, no explicit entity relationships for CartItem→Product, no REST API for cart operations, Product entity is fully compliant, but CartItem is not persisted
 
 ---
 
 ### Executive Summary
 
-The codebase demonstrates strong alignment with the product management portion of the architecture, implementing the ProductController, ProductService, and ProductRepository layers as specified. All expected annotations are present and correctly applied for the product domain. However, there are significant gaps regarding the shopping cart domain: there is no CartService, CartController, or persistence/repository for CartItem, and entity relationships between CartItem and Product are not established. These omissions prevent full realization of the intended shopping cart functionality.
+The codebase demonstrates strong alignment with the core product management architecture, implementing the ProductController, ProductService, and ProductRepository layers as specified in the architecture diagram. All expected annotations (`@RestController`, `@Service`, `@Repository`, `@Entity`) are present and correctly applied for the product domain. However, there are significant gaps regarding the shopping cart domain: there is no CartService, CartController, or persistence/repository for CartItem, and entity relationships between CartItem and Product are not established. These omissions prevent full realization of the intended shopping cart functionality.
 
 **Major Gaps/Discrepancies:**
 - Missing CartService and CartController layers
@@ -46,10 +32,10 @@ The codebase demonstrates strong alignment with the product management portion o
 | Component Name      | Type        | Diagnostic Details                                                                                                                                                                                                 |
 |---------------------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | ProductController   | Controller  | `src/main/java/com/example/shoppingcart/controller/ProductController.java`, class annotated with `@RestController`, delegates to ProductService, endpoints: `/api/products`, `/api/products/{id}`                  |
-| ProductService      | Service     | `src/main/java/com/example/shoppingcart/service/ProductService.java`, class annotated with `@Service`, delegates to ProductRepository, methods: `getAllProducts()`, `getProductById(Long)`                         |
-| ProductRepository   | Repository  | `src/main/java/com/example/shoppingcart/repository/ProductRepository.java`, interface extends `JpaRepository<Product, Long>`, annotated with `@Repository`                                                         |
-| Product            | Entity      | `src/main/java/com/example/shoppingcart/model/Product.java`, class annotated with `@Entity`, fields: `id`, `name`, `price`, has repository (ProductRepository)                                                   |
-| Controller→Service→Repository chain | Structure   | ProductController delegates to ProductService, which delegates to ProductRepository, matching architecture diagram and class diagram relationships.                                                              |
+| ProductService      | Service     | `src/main/java/com/example/shoppingcart/service/ProductService.java`, class annotated with `@Service`, delegates to ProductRepository, methods: `getAllProducts()`, `getProductById(Long)`                        |
+| ProductRepository   | Repository  | `src/main/java/com/example/shoppingcart/repository/ProductRepository.java`, interface extends `JpaRepository<Product, Long>`, annotated with `@Repository`                                                        |
+| Product            | Entity      | `src/main/java/com/example/shoppingcart/model/Product.java`, class annotated with `@Entity`, fields: `id`, `name`, `price`, has repository (ProductRepository)                                                    |
+| Controller→Service→Repository chain | Structure | ProductController delegates to ProductService, which delegates to ProductRepository, matching architecture diagram and class diagram relationships.                                                               |
 
 ---
 
@@ -74,7 +60,7 @@ The codebase demonstrates strong alignment with the product management portion o
 | CartController      | **Create `CartController` in `src/main/java/com/example/shoppingcart/controller/CartController.java`**. Annotate with `@RestController`. Add endpoints like `/cart/add`, `/cart/remove`, `/cart/view` for cart operations.    |
 | CartItem Entity     | **Annotate `CartItem` with `@Entity`** in `src/main/java/com/example/shoppingcart/model/CartItem.java`. Add `@Id` field. This enables persistence and aligns with the class diagram.                                           |
 | CartItemRepository  | **Create `CartItemRepository` in `src/main/java/com/example/shoppingcart/repository/CartItemRepository.java`**. Extend `JpaRepository<CartItem, Long>`. Ensures all entities are accessible via repositories.                  |
-| CartItem→Product Link | **Add JPA relationship in `CartItem`**: e.g., `@ManyToOne private Product product;`. This models the association as per the class diagram and supports referential integrity.                                               |
+| CartItem→Product Link| **Add JPA relationship in `CartItem`**: e.g., `@ManyToOne private Product product;`. This models the association as per the class diagram and supports referential integrity.                                                 |
 | REST API for Cart   | **Add endpoints in `CartController`**: `/cart/add`, `/cart/remove`, `/cart/view`. Each should delegate to CartService. This exposes cart functionality as required by the architecture.                                        |
 
 ---
@@ -108,6 +94,23 @@ public class ProductController {
 ```
 - **Annotations:** `@RestController` present and correct.
 - **Delegation:** Calls ProductService as expected.
+
+### Matched Example: Product Entity
+
+```java
+// src/main/java/com/example/shoppingcart/model/Product.java
+@Entity
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private double price;
+    // Getters and Setters
+}
+```
+- **Annotations:** `@Entity`, `@Id` present and correct.
+- **Repository:** ProductRepository exists.
 
 ### Gap Example: CartService Missing
 
@@ -201,7 +204,7 @@ graph TD
 |---------------------|-------------|--------------------------------------------------------------------------------------------------------|
 | CartService         | Service     | Missing entirely                                                                                       |
 | CartController      | Controller  | Missing entirely                                                                                       |
-| CartItem            | Entity      | Not an @Entity, no repository, no @Id                                                                  |
+| CartItem           | Entity      | Not an @Entity, no repository, no @Id                                                                  |
 | CartItemRepository  | Repository  | Missing                                                                                                |
 | CartItem→Product    | Relationship| No JPA relationship                                                                                    |
 | REST API for Cart   | Controller  | No endpoints for cart operations                                                                       |
@@ -216,5 +219,5 @@ graph TD
 | CartController      | Create `CartController` in `src/main/java/com/example/shoppingcart/controller/CartController.java`. Annotate with `@RestController`. Add endpoints like `/cart/add`, `/cart/remove`, `/cart/view`.                            |
 | CartItem Entity     | Annotate `CartItem` with `@Entity` in `src/main/java/com/example/shoppingcart/model/CartItem.java`. Add `@Id` field.                                                                                                           |
 | CartItemRepository  | Create `CartItemRepository` in `src/main/java/com/example/shoppingcart/repository/CartItemRepository.java`. Extend `JpaRepository<CartItem, Long>`.                                                                           |
-| CartItem→Product Link | Add JPA relationship in `CartItem`: e.g., `@ManyToOne private Product product;`.                                                                                                       |
+| CartItem→Product Link| Add JPA relationship in `CartItem`: e.g., `@ManyToOne private Product product;`.                                                                                                       |
 | REST API for Cart   | Add endpoints in `CartController`: `/cart/add`, `/cart/remove`, `/cart/view`. Each should delegate to CartService.                                                                     |
